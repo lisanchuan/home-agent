@@ -1,0 +1,576 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "家庭档案",
+  "description": "家庭智能体系统使用的家庭档案数据结构",
+  "type": "object",
+  "required": ["version", "created_at", "members"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "档案版本号",
+      "default": "1.0.0"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "档案创建时间"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "档案最后更新时间"
+    },
+    "privacy": {
+      "type": "object",
+      "properties": {
+        "storage_level": {
+          "type": "string",
+          "enum": ["local_only", "cloud_backup"],
+          "default": "local_only",
+          "description": "存储级别：仅本地或可云端备份"
+        },
+        "financial_visible": {
+          "type": "boolean",
+          "default": false,
+          "description": "财务信息是否对其他家庭成员可见"
+        }
+      }
+    },
+    "members": {
+      "type": "array",
+      "description": "家庭成员列表",
+      "items": {
+        "type": "object",
+        "required": ["name", "relationship", "birth_date"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "成员唯一标识符"
+          },
+          "name": {
+            "type": "string",
+            "description": "姓名"
+          },
+          "relationship": {
+            "type": "string",
+            "enum": ["self", "spouse", "child_minor", "child_adult", "parent", "other_relative", "helper"],
+            "description": "与户主关系"
+          },
+          "birth_date": {
+            "type": "string",
+            "format": "date",
+            "description": "出生日期"
+          },
+          "gender": {
+            "type": "string",
+            "enum": ["male", "female", "other"],
+            "description": "性别"
+          },
+          "occupation": {
+            "type": "string",
+            "description": "职业/身份"
+          },
+          "phone": {
+            "type": "string",
+            "description": "联系电话（紧急联系用）"
+          },
+          "is_minor": {
+            "type": "boolean",
+            "description": "是否未成年"
+          },
+          "school": {
+            "type": "string",
+            "description": "就读学校/年级（如适用）"
+          }
+        }
+      }
+    },
+    "health": {
+      "type": "object",
+      "properties": {
+        "allergies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["none", "food", "drug", "pollen", "dust", "other"]
+          },
+          "description": "过敏信息"
+        },
+        "allergy_details": {
+          "type": "string",
+          "description": "过敏详细信息"
+        },
+        "chronic_conditions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["none", "hypertension", "diabetes", "heart_disease", "asthma", "other"]
+          },
+          "description": "慢性疾病"
+        },
+        "chronic_details": {
+          "type": "string",
+          "description": "疾病详细信息"
+        },
+        "long_term_medications": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "长期服用药物"
+        },
+        "blood_type": {
+          "type": "string",
+          "enum": ["A", "B", "AB", "O", "unknown"],
+          "description": "血型"
+        },
+        "has_insurance": {
+          "type": "boolean",
+          "description": "是否有医保"
+        },
+        "usual_hospital": {
+          "type": "string",
+          "description": "常用医院"
+        },
+        "family_doctor_phone": {
+          "type": "string",
+          "description": "家庭医生电话"
+        }
+      }
+    },
+    "diet": {
+      "type": "object",
+      "properties": {
+        "preferences": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["none", "light", "spicy", "cantonese", "vegetarian", "seafood", "other"]
+          },
+          "description": "饮食偏好"
+        },
+        "dietary_restrictions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["none", "no_spicy", "no_seafood", "no_beef", "no_lamb", "no_pork", "no_vegetables", "halal", "other"]
+          },
+          "description": "忌口"
+        },
+        "restriction_details": {
+          "type": "string",
+          "description": "忌口详细信息"
+        },
+        "breakfast_habit": {
+          "type": "string",
+          "enum": ["home", "on_the_way", "skip", "work_school"],
+          "description": "早餐习惯"
+        },
+        "dinner_time": {
+          "type": "string",
+          "enum": ["before_18", "18_to_19", "19_to_20", "after_20", "irregular"],
+          "description": "晚餐时间"
+        },
+        "days_eating_home_per_week": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 7,
+          "description": "每周在家吃饭天数"
+        },
+        "cooking_person": {
+          "type": "string",
+          "enum": ["self", "spouse", "parent", "helper", "delivery_outside"],
+          "description": "主要做饭人"
+        },
+        "cooking_frequency_per_week": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 7,
+          "description": "每周做饭次数"
+        }
+      }
+    },
+    "schedule": {
+      "type": "object",
+      "properties": {
+        "workday": {
+          "type": "object",
+          "description": "工作日作息",
+          "properties": {
+            "self": {
+              "$ref": "#/properties/schedule/definitions/daily_schedule"
+            },
+            "spouse": {
+              "$ref": "#/properties/schedule/definitions/daily_schedule"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "$ref": "#/properties/schedule/definitions/daily_schedule"
+              }
+            }
+          }
+        },
+        "weekend_different": {
+          "type": "string",
+          "enum": ["similar", "later_wake", "irregular"],
+          "description": "周末作息与工作日差异"
+        },
+        "nap_habit": {
+          "type": "string",
+          "enum": ["daily", "sometimes", "never"],
+          "description": "午休习惯"
+        }
+      },
+      "definitions": {
+        "daily_schedule": {
+          "type": "object",
+          "properties": {
+            "wake_up": {
+              "type": "string",
+              "pattern": "^([01]?[0-9]|2[0-3]):[0-5][0-9]$",
+              "description": "起床时间 HH:mm"
+            },
+            "leave_home": {
+              "type": "string",
+              "pattern": "^([01]?[0-9]|2[0-3]):[0-5][0-9]$",
+              "description": "出门时间"
+            },
+            "off_work": {
+              "type": "string",
+              "pattern": "^([01]?[0-9]|2[0-3]):[0-5][0-9]$",
+              "description": "下班/放学时间"
+            },
+            "arrive_home": {
+              "type": "string",
+              "pattern": "^([01]?[0-9]|2[0-3]):[0-5][0-9]$",
+              "description": "到家时间"
+            },
+            "sleep": {
+              "type": "string",
+              "pattern": "^([01]?[0-9]|2[0-3]):[0-5][0-9]$",
+              "description": "睡觉时间"
+            }
+          }
+        }
+      }
+    },
+    "residence": {
+      "type": "object",
+      "properties": {
+        "province": {
+          "type": "string",
+          "description": "省份"
+        },
+        "city": {
+          "type": "string",
+          "description": "城市"
+        },
+        "district": {
+          "type": "string",
+          "description": "区县"
+        },
+        "address": {
+          "type": "string",
+          "description": "详细地址"
+        },
+        "community": {
+          "type": "string",
+          "description": "小区名称"
+        }
+      }
+    },
+    "transportation": {
+      "type": "object",
+      "properties": {
+        "methods": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["private_car", "public_transit", "electric_bike", "walking", "taxi", "company_shuttle"]
+          },
+          "description": "出行方式"
+        },
+        "commute_time_minutes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "单程通勤时间（分钟）"
+        },
+        "commute_route": {
+          "type": "object",
+          "properties": {
+            "from": {
+              "type": "string",
+              "description": "出发地"
+            },
+            "to": {
+              "type": "string",
+              "description": "目的地"
+            }
+          }
+        },
+        "nearby_facilities": {
+          "type": "object",
+          "properties": {
+            "metro_station": {
+              "type": "string",
+              "description": "最近地铁站"
+            },
+            "bus_stop": {
+              "type": "string",
+              "description": "最近公交站"
+            },
+            "supermarket": {
+              "type": "string",
+              "description": "最近超市/菜市场"
+            },
+            "hospital": {
+              "type": "string",
+              "description": "最近医院"
+            },
+            "pharmacy": {
+              "type": "string",
+              "description": "最近药店"
+            },
+            "pickup_station": {
+              "type": "string",
+              "description": "快递驿站/丰巢"
+            },
+            "children_school": {
+              "type": "string",
+              "description": "子女学校"
+            },
+            "gym": {
+              "type": "string",
+              "description": "健身房/运动场所"
+            }
+          }
+        }
+      }
+    },
+    "emergency": {
+      "type": "object",
+      "properties": {
+        "external_contacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "phone"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "姓名"
+              },
+              "relationship": {
+                "type": "string",
+                "description": "关系"
+              },
+              "phone": {
+                "type": "string",
+                "description": "电话"
+              },
+              "note": {
+                "type": "string",
+                "description": "备注"
+              }
+            }
+          },
+          "description": "紧急联系人（家庭外）"
+        },
+        "elder_living_status": {
+          "type": "string",
+          "enum": ["with_us", "nearby", "far_away"],
+          "description": "老人同住情况"
+        },
+        "pet": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["none", "dog", "cat", "other"],
+              "description": "宠物类型"
+            },
+            "breed": {
+              "type": "string",
+              "description": "品种"
+            },
+            "name": {
+              "type": "string",
+              "description": "名字"
+            }
+          },
+          "description": "宠物信息"
+        }
+      }
+    },
+    "preferences": {
+      "type": "object",
+      "properties": {
+        "travel": {
+          "type": "object",
+          "properties": {
+            "frequency": {
+              "type": "string",
+              "enum": ["rarely", "1_2_per_year", "quarterly", "often"],
+              "description": "旅行频率"
+            },
+            "styles": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["beach", "city", "nature", "culture", "family", "adventure", "other"]
+              },
+              "description": "旅行风格"
+            },
+            "style_preference": {
+              "type": "string",
+              "enum": ["group_tour", "free_travel", "semi_private"],
+              "description": "出行偏好"
+            }
+          }
+        },
+        "shopping": {
+          "type": "object",
+          "properties": {
+            "channels": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["taobao", "jd", "pinduoduo", "xiaohongshu", "offline", "warehouse", "other"]
+              },
+              "description": "购物渠道"
+            },
+            "decision_factors": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["price", "quality", "reviews", "convenience", "appearance"],
+                "description": "购买决策因素"
+              },
+              "description": "按重要性排序"
+            }
+          }
+        },
+        "entertainment": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["movies", "short_videos", "reading", "fitness", "gaming", "food_hunting", "photography", "other"]
+          },
+          "description": "娱乐休闲偏好"
+        },
+        "exercise": {
+          "type": "object",
+          "properties": {
+            "times_per_week": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 7,
+              "description": "每周运动次数"
+            },
+            "activities": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["running", "swimming", "gym", "ball_sports", "yoga", "walking", "other"]
+              },
+              "description": "喜欢的运动"
+            }
+          }
+        }
+      }
+    },
+    "devices": {
+      "type": "object",
+      "properties": {
+        "smart_home": {
+          "type": "object",
+          "properties": {
+            "platform": {
+              "type": "string",
+              "enum": ["xiaomi", "huawei", "apple_homekit", "tmall", "none"],
+              "description": "智能家居平台"
+            },
+            "devices": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["ac", "light", "speaker", "camera", "lock", "robot_vacuum", "curtain", "tv", "other"],
+                    "description": "设备类型"
+                  },
+                  "brand": {
+                    "type": "string",
+                    "description": "品牌/型号"
+                  },
+                  "platform": {
+                    "type": "string",
+                    "description": "连接平台"
+                  },
+                  "note": {
+                    "type": "string",
+                    "description": "备注"
+                  }
+                }
+              },
+              "description": "设备列表"
+            }
+          }
+        },
+        "phone_os": {
+          "type": "string",
+          "enum": ["all_iphone", "all_android", "mixed"],
+          "description": "手机系统"
+        }
+      }
+    },
+    "finance": {
+      "type": "object",
+      "properties": {
+        "income_range": {
+          "type": "string",
+          "enum": ["undisclosed", "below_30w", "30w_to_50w", "50w_to_100w", "above_100w"],
+          "description": "收入区间"
+        },
+        "budget_management": {
+          "type": "string",
+          "enum": ["detailed", "approximate", "none"],
+          "description": "预算管理"
+        },
+        "expenses": {
+          "type": "object",
+          "properties": {
+            "housing_loan": {
+              "type": "string",
+              "description": "房贷/房租"
+            },
+            "children_education": {
+              "type": "string",
+              "description": "子女教育"
+            },
+            "daily_living": {
+              "type": "string",
+              "description": "日常生活"
+            },
+            "other_major": {
+              "type": "string",
+              "description": "其他大项"
+            }
+          },
+          "description": "主要支出类别"
+        },
+        "investment_preference": {
+          "type": "string",
+          "enum": ["conservative", "balanced", "moderate", "aggressive"],
+          "description": "投资理财偏好"
+        },
+        "financial_goals": {
+          "type": "string",
+          "description": "重要财务目标"
+        }
+      }
+    }
+  }
+}
