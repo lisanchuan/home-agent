@@ -91,16 +91,28 @@ class HybridRetriever:
             return []
     
     def _keyword_search(self, query: str, scopes: List[str], filters: Optional[Dict]) -> List[Dict]:
-        keywords = QueryUnderstanding.parse(query)["keywords"]
-        if not keywords:
-            return []
         try:
-            from ..memory.database import query_knowledge
-            rows = query_knowledge(
-                visibility=scopes[0] if len(scopes) == 1 else None,
-                knowledge_type=filters.get("type") if filters else None,
-                limit=self.top_k
-            )
+            from ..memory.database import fts5_search, query_knowledge
+            # Use FTS5 for efficient full-text search
+            all_results = fts5_search(query, limit=self.top_k * 2)
+            
+            # Also try keyword search as fallback/augmentation
+            keywords = QueryUnderstanding.parse(query)["keywords"]
+            if keywords:
+                for scope in scopes:
+                    rows = query_knowledge(
+                        visibility=scope,
+                        knowledge_type=filters.get("type") if filters else None,
+                        limit=self.top_k
+                    )
+                    for r in rows:
+                        content_lower = r["content"].lower()
+                        if any(kw.lower() in content_lower for kw in keywords):
+                            if r not in all_results:
+                                all_results.append({**r, "keyword_match": True})
+            
+            return all_results
+            rows = all_results
             results = []
             for r in rows:
                 content_lower = r["content"].lower()

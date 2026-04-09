@@ -91,6 +91,10 @@ CREATE TABLE IF NOT EXISTS deleted_knowledge (
     delete_reason TEXT
 );
 
+-- Search text column for fast LIKE searches
+-- Note: Column may already exist, so this is a no-op if present
+-- Run separately: ALTER TABLE knowledge_nodes ADD COLUMN search_text TEXT;
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_knowledge_type ON knowledge_nodes(type);
 CREATE INDEX IF NOT EXISTS idx_knowledge_category ON knowledge_nodes(category);
@@ -101,6 +105,7 @@ CREATE INDEX IF NOT EXISTS idx_knowledge_confidence ON knowledge_nodes(confidenc
 CREATE INDEX IF NOT EXISTS idx_access_logs_requester ON access_logs(requester_id);
 CREATE INDEX IF NOT EXISTS idx_access_logs_timestamp ON access_logs(timestamp);
 CREATE INDEX IF NOT EXISTS idx_pending_expires ON pending_confirmations(expires_at);
+CREATE INDEX IF NOT EXISTS idx_knowledge_search ON knowledge_nodes(search_text);
 """
 
 MEMBER_DEFAULT = {

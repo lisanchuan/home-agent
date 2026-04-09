@@ -125,6 +125,28 @@ def query_knowledge(
         conn.close()
 
 
+def fts5_search(query: str, limit: int = 20) -> List[Dict]:
+    """Full-text search using search_text column (FTS5 fallback)"""
+    conn = get_db()
+    try:
+        # Use search_text column with LIKE
+        sql = """
+            SELECT * FROM knowledge_nodes
+            WHERE status = 'active'
+            AND (content LIKE ? OR category LIKE ? OR search_text LIKE ?)
+            ORDER BY updated_at DESC
+            LIMIT ?
+        """
+        like_pattern = f"%{query}%"
+        rows = conn.execute(sql, (like_pattern, like_pattern, like_pattern, limit)).fetchall()
+        return [dict(row) for row in rows]
+    except Exception as e:
+        print(f"Search error: {e}")
+        return []
+    finally:
+        conn.close()
+
+
 def update_confidence(knowledge_id: str, new_confidence: float):
     """Update knowledge confidence"""
     conn = get_db()
