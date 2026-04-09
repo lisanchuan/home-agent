@@ -4,10 +4,10 @@ import sys
 import json
 from pathlib import Path
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from memory import MemoryCenter, init_db
+from src.memory import MemoryCenter, init_db
+from src.rag.query import RAGQueryEngine
 
 
 def cmd_init(args):
@@ -33,17 +33,10 @@ def cmd_add(args):
 
 
 def cmd_search(args):
-    """Search knowledge"""
-    mc = MemoryCenter(requester_id=args.agent)
-    results = mc.search(
-        query=args.query,
-        scope=args.scope.split(",") if args.scope else None,
-        n_results=args.limit
-    )
-    print(f"Found {len(results)} results:")
-    for r in results:
-        print(f"  [{r['id']}] {r['content']}")
-        print(f"    type={r['type']}, visibility={r['visibility']}, confidence={r.get('similarity', r.get('confidence')):.2f}")
+    """Search knowledge using RAG"""
+    engine = RAGQueryEngine(requester_id=args.agent)
+    result = engine.ask(args.query)
+    print(result)
 
 
 def cmd_list(args):
@@ -77,28 +70,15 @@ def cmd_export(args):
     print(json.dumps(data, indent=2, ensure_ascii=False))
 
 
-def cmd_rebuild_index(args):
-    """Rebuild vector index"""
-    from memory.database import query_knowledge
-    from rag.vector_store import rebuild_index
-    
-    print("Rebuilding index...")
-    knowledge = query_knowledge(limit=10000)
-    rebuild_index(knowledge)
-    print(f"✓ Index rebuilt with {len(knowledge)} items")
-
-
 if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description="Family Memory Center CLI")
     subparsers = parser.add_subparsers()
     
-    # init
     p = subparsers.add_parser("init", help="Initialize database")
     p.set_defaults(cmd=cmd_init)
     
-    # add
     p = subparsers.add_parser("add", help="Add knowledge")
     p.add_argument("--content", "-c", required=True, help="Knowledge content")
     p.add_argument("--type", "-t", required=True, choices=["fact", "preference", "habit", "taboo"])
@@ -110,15 +90,11 @@ if __name__ == "__main__":
     p.add_argument("--agent", default="cli")
     p.set_defaults(cmd=cmd_add)
     
-    # search
-    p = subparsers.add_parser("search", help="Search knowledge")
+    p = subparsers.add_parser("search", help="Search knowledge (RAG)")
     p.add_argument("--query", "-q", required=True, help="Search query")
-    p.add_argument("--scope", "-s", help="Comma-separated scopes")
-    p.add_argument("--limit", "-l", type=int, default=10)
     p.add_argument("--agent", "-a", default="cli")
     p.set_defaults(cmd=cmd_search)
     
-    # list
     p = subparsers.add_parser("list", help="List knowledge")
     p.add_argument("--visibility", "-v")
     p.add_argument("--owner", "-o")
@@ -127,17 +103,11 @@ if __name__ == "__main__":
     p.add_argument("--agent", "-a", default="cli")
     p.set_defaults(cmd=cmd_list)
     
-    # members
     p = subparsers.add_parser("members", help="List members")
     p.set_defaults(cmd=cmd_members)
     
-    # export
     p = subparsers.add_parser("export", help="Export data")
     p.set_defaults(cmd=cmd_export)
-    
-    # rebuild-index
-    p = subparsers.add_parser("rebuild-index", help="Rebuild vector index")
-    p.set_defaults(cmd=cmd_rebuild_index)
     
     args = parser.parse_args()
     
