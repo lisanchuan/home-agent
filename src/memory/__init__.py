@@ -1,5 +1,4 @@
 """Family Memory Center — Main Module"""
-from typing import List, Dict, Optional, Any
 from .database import (
     init_db, get_db, create_knowledge, get_knowledge, query_knowledge,
     update_confidence, increment_trigger, soft_delete_knowledge,
@@ -7,8 +6,9 @@ from .database import (
     add_pending_confirmation, get_pending_confirmations, remove_pending_confirmation,
     export_all_data
 )
-from .access_control import AccessController, RequesterType, Visibility, QueryScope
-from .schema import MEMBER_DEFAULT
+from .access_control import AccessController
+from .learning import LearningEngine, ConflictResolver
+from .backup import BackupManager
 
 
 class MemoryCenter:
@@ -16,8 +16,9 @@ class MemoryCenter:
     
     def __init__(self, requester_id: str = "system", requester_type: str = "agent"):
         self.requester_id = requester_id
-        self.requester_type = RequesterType(requester_type)
-        self.access = AccessController(requester_id, self.requester_type)
+        self.requester_type = requester_type
+        self.access = AccessController(requester_id, requester_type)
+        self.learning = LearningEngine(requester_id, requester_type)
     
     # === Knowledge Operations ===
     
@@ -27,11 +28,10 @@ class MemoryCenter:
         knowledge_type: str,
         category: str,
         visibility: str,
-        owner_member_id: Optional[str] = None,
-        value: Optional[str] = None,
+        owner_member_id: str = None,
+        value: str = None,
         confidence: float = 0.5,
-        source: str = "learning",
-        auto_index: bool = True
+        source: str = "manual"
     ) -> str:
         """Add new knowledge"""
         kid = create_knowledge(
@@ -45,178 +45,120 @@ class MemoryCenter:
             source=source
         )
         
-        # Update vector index
-        if auto_index:
-            try:
-                import sys
-                from pathlib import Path
-                sys.path.insert(0, str(Path(__file__).parent.parent))
-                from rag.vector_store import add_knowledge_vector
-                add_knowledge_vector(
-                    knowledge_id=kid,
-                    content=content,
-                    metadata={
-                        "knowledge_id": kid,
-                        "type": knowledge_type,
-                        "category": category,
-                        "visibility": visibility,
-                        "owner_member_id": owner_member_id,
-                        "confidence": confidence
-                    }
-                )
-            except Exception as e:
-                print(f"Warning: Failed to index knowledge: {e}")
+        # Try to index in vector store
+        try:
+            import sys
+            from pathlib import Path
+            sys.path.insert(0, str(Path(__file__).parent.parent))
+            from rag.vector_store import add_knowledge_vector
+            add_knowledge_vector(
+                knowledge_id=kid,
+                content=content,
+                metadata={
+                    "knowledge_id": kid,
+                    "type": knowledge_type,
+                    "category": category,
+                    "visibility": visibility,
+                    "owner_member_id": owner_member_id,
+                    "confidence": confidence
+                }
+            )
+        except Exception:
+            pass
         
         return kid
     
-    def get(self, knowledge_id: str) -> Optional[Dict]:
-        """Get knowledge by ID"""
-        knowledge = get_knowledge(knowledge_id)
-        if knowledge and self.access.can_read(knowledge):
-            return knowledge
-        return None
+    def get(self, knowledge_id: str):
+        return get_knowledge(knowledge_id)
     
-    def search(
-        self,
-        query: str,
-        scope: Optional[List[str]] = None,
-        n_results: int = 10,
-        knowledge_type: Optional[str] = None
-    ) -> List[Dict]:
-        """Search knowledge using RAG"""
-        # Get scopes
-        if scope is None:
-            scopes = self.access.get_visible_scopes()
-        else:
-            scopes = scope
-        
-        # Build filter
-        filter_metadata = {
-            "visibility": {"$in": scopes}
-        }
-        if knowledge_type:
-            filter_metadata["type"] = knowledge_type
-        
-        # Vector search
-        try:
-            from ..rag.vector_store import search_vectors
-            results = search_vectors(
-                query=query,
-                n_results=n_results * 2,  # Get more, then filter
-                filter_metadata=filter_metadata
-            )
-            
-            # Filter by access
-            filtered = []
-            for r in results:
-                kid = r["knowledge_id"]
-                k = get_knowledge(kid)
-                if k and self.access.can_read(k):
-                    filtered.append({
-                        **k,
-                        "similarity": r["similarity"]
-                    })
-                    if len(filtered) >= n_results:
-                        break
-            
-            return filtered
-        except Exception as e:
-            print(f"Vector search failed, falling back to DB: {e}")
-            # Fallback to DB search
-            knowledge_list = query_knowledge(
-                visibility=scopes[0] if len(scopes) == 1 else None,
-                knowledge_type=knowledge_type,
-                limit=n_results
-            )
-            return self.access.filter_knowledge_list(knowledge_list)
+    def search(self, query: str, scopes: list = None, n_results: int = 10):
+        """Search using RAG"""
+        from rag.query import RAGQueryEngine
+        engine = RAGQueryEngine(self.requester_id, self.requester_type)
+        return engine.query(query, scope=scopes, n_results=n_results)
     
-    def query(
-        self,
-        visibility: Optional[str] = None,
-        owner_member_id: Optional[str] = None,
-        knowledge_type: Optional[str] = None,
-        category: Optional[str] = None,
-        limit: int = 100
-    ) -> List[Dict]:
-        """Direct DB query with filters"""
-        knowledge_list = query_knowledge(
+    def query(self, visibility: str = None, owner_member_id: str = None,
+               knowledge_type: str = None, category: str = None, limit: int = 100):
+        """Direct DB query"""
+        rows = query_knowledge(
             visibility=visibility,
             owner_member_id=owner_member_id,
             knowledge_type=knowledge_type,
             category=category,
             limit=limit
         )
-        return self.access.filter_knowledge_list(knowledge_list)
-    
-    def update_confidence(self, knowledge_id: str, new_confidence: float):
-        """Update knowledge confidence"""
-        update_confidence(knowledge_id, new_confidence)
-    
-    def trigger(self, knowledge_id: str):
-        """Record knowledge trigger (for confidence boost)"""
-        increment_trigger(knowledge_id)
+        return self.access.filter_knowledge_list(rows)
     
     def delete(self, knowledge_id: str, reason: str = "user_confirmed"):
-        """Delete knowledge"""
         soft_delete_knowledge(knowledge_id, reason)
+    
+    def export(self):
+        return export_all_data()
     
     # === Member Operations ===
     
-    def add_member(
-        self,
-        name: str,
-        relationship: str,
-        role: str = "member",
-        is_minor: bool = False,
-        **kwargs
-    ) -> str:
-        """Add family member"""
+    def add_member(self, name: str, relationship: str, role: str = "member",
+                   is_minor: bool = False, **kwargs) -> str:
         return create_member(name, relationship, role, is_minor, **kwargs)
     
-    def get_member(self, member_id: str) -> Optional[Dict]:
-        """Get member"""
+    def get_member(self, member_id: str):
         return get_member(member_id)
     
-    def get_members(self) -> List[Dict]:
-        """Get all members"""
+    def get_members(self):
         return get_all_members()
     
     # === Confirmation Queue ===
     
-    def add_pending(
-        self,
-        knowledge_type: str,
-        knowledge_content: str,
-        suggested_value: Optional[str] = None,
-        trigger_context: Optional[str] = None
-    ) -> str:
-        """Add pending confirmation"""
-        return add_pending_confirmation(
-            knowledge_type, knowledge_content, suggested_value, trigger_context
+    def get_pending(self, limit: int = 20):
+        return get_pending_confirmations(limit)
+    
+    def confirm(self, confirmation_id: str, content: str, knowledge_type: str,
+                category: str, visibility: str, owner_member_id: str = None):
+        remove_pending_confirmation(confirmation_id)
+        return create_knowledge(
+            content=content,
+            knowledge_type=knowledge_type,
+            category=category,
+            visibility=visibility,
+            owner_member_id=owner_member_id,
+            confidence=0.7,
+            source="active_confirmation"
         )
     
-    def get_pending(self, limit: int = 20) -> List[Dict]:
-        """Get pending confirmations"""
-        return get_pending_confirmifications(limit)
+    # === Learning ===
     
-    def confirm(self, confirmation_id: str, knowledge_id: str):
-        """Confirm pending knowledge"""
-        remove_pending_confirmation(confirmation_id)
+    def observe(self, text: str, context: str = None) -> list:
+        """Passively observe text"""
+        return self.learning.observe(text, context)
+    
+    def adjust_confidence(self, knowledge_id: str, triggered: bool = False):
+        return self.learning.adjust_confidence(knowledge_id, triggered)
     
     # === Backup ===
     
-    def export(self) -> Dict[str, Any]:
-        """Export all data"""
-        return export_all_data()
+    def backup_full(self, label: str = None) -> str:
+        bm = BackupManager()
+        return bm.backup_full(label)
+    
+    def backup_incremental(self) -> str:
+        bm = BackupManager()
+        return bm.backup_incremental()
+    
+    def list_backups(self) -> list:
+        bm = BackupManager()
+        return bm.list_backups()
+    
+    def restore(self, backup_path: str, restore_type: str = "full") -> bool:
+        bm = BackupManager()
+        return bm.restore(backup_path, restore_type)
     
     # === Initialization ===
     
     @staticmethod
     def initialize():
-        """Initialize database"""
+        from .database import init_db, get_all_members
+        from .schema import MEMBER_DEFAULT
         init_db()
-        
-        # Add default members if not exist
         existing = get_all_members()
         if not existing:
             for name, data in MEMBER_DEFAULT.items():
@@ -233,5 +175,4 @@ class MemoryCenter:
             print("Default members created")
 
 
-# Initialize on import
 MemoryCenter.initialize()
