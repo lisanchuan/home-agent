@@ -61,6 +61,7 @@ Every task and conversation turn must be logged. Do not skip.
 - **问题出现后必须反思**：发现任何问题（自己发现的或用户指出的），都要主动想根因和规避方法，不要只修表面；反思结果写入 ISSUE_LOG 并更新 AGENTS.md 规则
 - **列待办必须验证来源**：从 MEMORY.md 等文件拉待办时，必须用 sessions 历史交叉验证，不确定时问用户确认，不能直接抄过来
 - **用户说"做X"时先确认范围**：列出多条待办时，用户没明确说"两个都做"，就先问"做哪条/哪几条"，不要默认全做或跳到相邻项
+- **重大架构/方案替换必须先问用户**：替换依赖、改变技术方案这种事要先说，不能自己悄悄改了；决策后立即记录到 CONVERSATION_LOG
 
 ### CONVERSATION_LOG.md — Every Conversation Turn
 
