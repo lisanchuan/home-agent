@@ -60,6 +60,7 @@ Every task and conversation turn must be logged. Do not skip.
 - **内部思考和日志分开**：内部思考存 `~/.openclaw/workspace/memory/`；Obsidian 只写 CONVERSATION_LOG 格式（用户要求/我的行动/结果），不要混写压缩快照
 - **问题出现后必须反思**：发现任何问题（自己发现的或用户指出的），都要主动想根因和规避方法，不要只修表面；反思结果写入 ISSUE_LOG 并更新 AGENTS.md 规则
 - **列待办必须验证来源**：从 MEMORY.md 等文件拉待办时，必须用 sessions 历史交叉验证，不确定时问用户确认，不能直接抄过来
+- **用户说"做X"时先确认范围**：列出多条待办时，用户没明确说"两个都做"，就先问"做哪条/哪几条"，不要默认全做或跳到相邻项
 
 ### CONVERSATION_LOG.md — Every Conversation Turn
 
