@@ -57,6 +57,7 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 Every task and conversation turn must be logged. Do not skip.
 - **任务指令立即闭环**：用户说"删任务"、"取消"、"跳过" → 立即记结果，不要过一会儿再补
 - **总结/复盘前先查历史**：不要凭记忆，用 sessions/ 目录或 sessions_history 工具查证
+- **内部思考和日志分开**：内部思考存 `~/.openclaw/workspace/memory/`；Obsidian 只写 CONVERSATION_LOG 格式（用户要求/我的行动/结果），不要混写压缩快照
 
 ### CONVERSATION_LOG.md — Every Conversation Turn
 
