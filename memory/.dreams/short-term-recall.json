@@ -1,0 +1,156 @@
+{
+  "version": 1,
+  "updatedAt": "2026-04-11T06:14:37.460Z",
+  "entries": {
+    "memory:memory/2026-04-09.md:1320:1371": {
+      "key": "memory:memory/2026-04-09.md:1320:1371",
+      "path": "memory/2026-04-09.md",
+      "startLine": 1320,
+      "endLine": 1371,
+      "source": "memory",
+      "snippet": "│ ├── 被动学习机制.md │ ├── 主动确认机制.md │ ├── 知识冲突处理.md │ ├── 知识衰减机制.md │ └── 渐进学习机制设计.md ├── data/ │ ├── schemas/ │ │ └── family-profile.schema.json │ └── profiles/ │ └── default-template.md ``` ## 3:19 PM - Heartbeat ### 等待用户确认下一步方向 #### 方向A（推荐）：Family Memory Center 设计 | 文档 | 内容 | |------|------| | 记忆中心职责 | 家庭知识库、成员档案、历史决策 | | RAG 知识库结构 | 如何组织家庭长期记忆 | | 与各 Agent 的交互协议 | 如何查询/更新 | #### 方向B：知识存储层实现 | 任务 | 内容 | |------|------| | 知识存储结构 | 选 SQLite/JSON，设计表结构 | | 被动学习代码 | 对话结束后的自动分析 | | 置信度更新逻辑 | 触发计数、衰减计算 | ### 当前状态 - 等待用户选择方向 - 等待时间：~20分钟 ### 无紧急事项 ## 4:11 PM - Family Memory Center 规划确认 ### 用户选择 | # | 选择 | 说明 | |---|------|------| | 1 | C | 服务用户 + Agent（有规则） | | 2 |",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "totalScore": 0.7891743611969575,
+      "maxScore": 0.7891743611969575,
+      "firstRecalledAt": "2026-04-11T06:14:37.460Z",
+      "lastRecalledAt": "2026-04-11T06:14:37.460Z",
+      "queryHashes": [
+        "ba00c245fe61"
+      ],
+      "recallDays": [
+        "2026-04-11"
+      ],
+      "conceptTags": [
+        "被动学习机制.md",
+        "主动确认机制.md",
+        "知识冲突处理.md",
+        "知识衰减机制.md",
+        "渐进学习机制设计.md",
+        "family-profile.schema.json",
+        "default-template.md",
+        "如何查询/更新"
+      ]
+    },
+    "memory:memory/2026-04-09.md:1060:1097": {
+      "key": "memory:memory/2026-04-09.md:1060:1097",
+      "path": "memory/2026-04-09.md",
+      "startLine": 1060,
+      "endLine": 1097,
+      "source": "memory",
+      "snippet": "| **finishing-a-development-branch** | 收尾：测试、PR、清理 | 任务完成后 | ### 关键流程 ``` brainstorming（设计）→ writing-plans（计划）→ subagent-driven-development（执行） ↑ ↓ ←←←←←←←←←←← 用户审批 ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←← ``` ### 核心原则 | 原则 | 含义 | |------|------| | **YAGNI** | You Aren't Gonna Need It — 不要做过度设计 | | **DRY** | Don't Repeat Yourself — 不要重复 | | **TDD** | Test-Driven Development — 先写测试再写代码 | | **HARD-GATE** | 没有设计批准，绝对不开始写代码 | ### 做事规范（借鉴到家庭智能体） 1. **先理解再动手** — 先问清楚需求、目的、约束 2. **分阶段审批** — 设计分块呈现，逐块确认 3. **写文档再执行** — 有设计文档、实施计划再动手 4. **小任务拆分** — 2-5分钟一个任务，任务粒度要细 5. **TDD驱动** — 先写测试（验证步骤），再写实现 ### 用户问题 **\"这套规范应用到家庭智能体项目的哪个阶段？",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "totalScore": 0.7878746992909327,
+      "maxScore": 0.7878746992909327,
+      "firstRecalledAt": "2026-04-11T06:14:37.460Z",
+      "lastRecalledAt": "2026-04-11T06:14:37.460Z",
+      "queryHashes": [
+        "ba00c245fe61"
+      ],
+      "recallDays": [
+        "2026-04-11"
+      ],
+      "conceptTags": [
+        "finishing-a-development-branch",
+        "writing-plans",
+        "subagent-driven-development",
+        "test-driven",
+        "hard-gate",
+        "2-5分钟一个任务",
+        "finishing",
+        "development"
+      ]
+    },
+    "memory:memory/2026-04-09.md:1036:1067": {
+      "key": "memory:memory/2026-04-09.md:1036:1067",
+      "path": "memory/2026-04-09.md",
+      "startLine": 1036,
+      "endLine": 1067,
+      "source": "memory",
+      "snippet": "2. **能否提供链接或关键词？**（方便我抓取具体内容） ### 下一步 - 获取 Superpower 具体来源后，深入学习其核心理念 - 然后转化为\"做事规范\"应用到家庭智能体项目中 ## 12:05 PM - Superpower AI Agent 找到来源！ ### 重大突破 找到来源了！是 **obra/superpowers** 这个开源项目，GitHub 上 99k+ stars 的超级热门。 ### Superpower 核心理念 > *\"Don't just jump into code. Step back, understand what you're really building, present a design, get approval, then execute.\"* ### 核心技能（Skills） | Skill | 作用 | 何时触发 | |-------|------|---------| | **brainstorming** | 理解想法 → 探索方案 → 呈现设计 | 任何创造性工作之前（写代码前）| | **writing-plans** | 写详细的实施计划（2-5分钟的任务） | 设计批准后 | | **subagent-driven-development** | 派生子Agent执行计划，两阶段审查 | 执行实施计划 | | **test-driven-development** | 红绿重构 TDD 循环 | 实施过程中 | | **systematic-debugging** | 4步根因分析 | 调",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "totalScore": 0.7784650356011635,
+      "maxScore": 0.7784650356011635,
+      "firstRecalledAt": "2026-04-11T06:14:37.460Z",
+      "lastRecalledAt": "2026-04-11T06:14:37.460Z",
+      "queryHashes": [
+        "ba00c245fe61"
+      ],
+      "recallDays": [
+        "2026-04-11"
+      ],
+      "conceptTags": [
+        "obra/superpowers",
+        "writing-plans",
+        "2-5分钟的任务",
+        "subagent-driven-development",
+        "test-driven-development",
+        "systematic-debugging",
+        "能否",
+        "提供"
+      ]
+    },
+    "memory:memory/2026-04-09.md:1162:1214": {
+      "key": "memory:memory/2026-04-09.md:1162:1214",
+      "path": "memory/2026-04-09.md",
+      "startLine": 1162,
+      "endLine": 1214,
+      "source": "memory",
+      "snippet": "- 直接决定系统能不能用 - 其他问题都可以绕过，唯独这个必须正面解决 ### 解决方案框架 - 路径A：快速填充（手动录入，10分钟起步） - 路径B：预设知识库（开箱即用） - 路径C：渐进学习（每次对话自动积累） ### 冲突处理 - 标记冲突，观察3次再决定是否更新 - 避免一次例外覆盖长期规律 ### 信任建立曲线 - 0-3天：只做高确定性的事 - 7-14天：信任建立期 - 谷底策略：不主动做深度理解类任务 ### 本周任务 | 优先级 | 任务 | |--------|------| | P0 | 家庭档案模板 | | P0 | 预设知识库结构 | | P1 | 渐进学习机制 | | P1 | 冲突处理逻辑 | ### 待用户选择 1. 先做家庭档案模板 2. 先做渐进学习机制 ### 当前时间 - 1:53 PM - 等待用户回复 ## 2:21 PM - 待用户回复家庭档案模板设计 ### brainstorming 状态 - 已发出4个问题等待用户回答： 1. 收集范围（哪些类别） 2. 隐私级别（本地/云端） 3. 录入方式（一次性/分批/对话） 4. 输出格式（Markdown/JSON/两者） ### 当前阻塞 - 等待用户回复后继续 ### 项目状态 - GitHub 项目已创建：lisanchuan/home-agent - 设计文档已整理：docs/家庭智能体系统设计总结.md ## 2:22 PM - Heartbeat",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "totalScore": 0.7427855948279494,
+      "maxScore": 0.7427855948279494,
+      "firstRecalledAt": "2026-04-11T06:14:37.460Z",
+      "lastRecalledAt": "2026-04-11T06:14:37.460Z",
+      "queryHashes": [
+        "ba00c245fe61"
+      ],
+      "recallDays": [
+        "2026-04-11"
+      ],
+      "conceptTags": [
+        "0-3天",
+        "7-14天",
+        "本地/云端",
+        "一次性/分批/对话",
+        "markdown/json/两者",
+        "lisanchuan/home-agent",
+        "docs/家庭智能体系统设计总结.md",
+        "直接"
+      ]
+    },
+    "memory:memory/2026-04-09.md:1251:1294": {
+      "key": "memory:memory/2026-04-09.md:1251:1294",
+      "path": "memory/2026-04-09.md",
+      "startLine": 1251,
+      "endLine": 1294,
+      "source": "memory",
+      "snippet": "### brainstorming 状态 - 已发出5个问题等待用户回答： 1. 学习来源（A/B/C） 2. 学习触发方式（A/B/C） 3. 知识分类（A/B/C） 4. 冲突处理策略（A/B/C） 5. 遗忘机制（A/B/C） ### 当前阻塞 - 等待用户回复后开始 writing-plans ### 已完成 - Task 1: 家庭档案模板 ✅ - Task 2: 待开始（渐进学习机制） ## 2:31 PM - Task 2 writing-plans 已提交 ### 用户选择（渐进学习机制设计） 1. 学习来源：C（日常对话 + 正式问答） 2. 触发方式：C（混合：简单被动学，重要主动确认） 3. 知识分类：C（四层：事实/偏好/习惯/禁忌） 4. 冲突策略：A（保守：观察3次再决定） 5. 遗忘机制：B（X个月不触发 → 标记待确认） ### writing-plans 任务拆分 | # | 任务 | 产出物 | |---|------|--------| | 1 | 知识分类体系四层结构 | docs/知识分类体系.md | | 2 | 被动学习流程 | docs/被动学习机制.md | | 3 | 主动确认机制 | docs/主动确认机制.md | | 4 | 冲突处理逻辑 | docs/知识冲突处理.md | | 5 | 遗忘与衰减机制 | docs/知识衰减机制.md | | 6 | 整合：渐进学习机制设计 | docs/渐进学习机制设计.md | ### 状态 - 等待用户确认后开始执行 ## 2:57 PM -",
+      "recallCount": 1,
+      "dailyCount": 0,
+      "totalScore": 0.7117301453227345,
+      "maxScore": 0.7117301453227345,
+      "firstRecalledAt": "2026-04-11T06:14:37.460Z",
+      "lastRecalledAt": "2026-04-11T06:14:37.460Z",
+      "queryHashes": [
+        "ba00c245fe61"
+      ],
+      "recallDays": [
+        "2026-04-11"
+      ],
+      "conceptTags": [
+        "a/b/c",
+        "writing-plans",
+        "事实/偏好/习惯/禁忌",
+        "docs/知识分类体系.md",
+        "docs/被动学习机制.md",
+        "docs/主动确认机制.md",
+        "docs/知识冲突处理.md",
+        "docs/知识衰减机制.md"
+      ]
+    }
+  }
+}

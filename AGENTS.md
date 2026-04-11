@@ -55,11 +55,17 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 ## Task Logging
 
 Every task and conversation turn must be logged. Do not skip.
+- **任务指令立即闭环**：用户说"删任务"、"取消"、"跳过" → 立即记结果，不要过一会儿再补
+- **总结/复盘前先查历史**：不要凭记忆，用 sessions/ 目录或 sessions_history 工具查证
 
 ### CONVERSATION_LOG.md — Every Conversation Turn
 
 After each user message + assistant response (every turn), append to:
 `/Users/lisanchuan1/.openclaw/agents/supervisor/workspace/CONVERSATION_LOG.md`
+
+> **⚠️ 总结/复盘前必须先查 session 历史**，不要凭记忆补录。
+> 查法：`for f in ~/.openclaw/agents/main/sessions/*.jsonl; do ... grep ...`
+> 或用 sessions_history 工具查。
 
 Format:
 ```markdown
