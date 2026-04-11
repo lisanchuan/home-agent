@@ -6,15 +6,21 @@ GitHub Trending AI 分析器
 
 import subprocess
 import json
-import sys
 import os
-import re
+import urllib.request
 from datetime import datetime, timedelta
 
+# ── MiniMax API 配置 ──────────────────────────────────────────────
+MINIMAX_API_KEY = "sk-cp-ChtXE5BJLzAv9LVPJXtL0eKh3pqAK5_xlQOyf-mSt7MHCQaD8ykHVFC8UaYlEoZhi6PpSb1SL08lmBhWUaTzGSS_tzed9x20ksd_5kAGr55NPrau5BPX_0s"
+MINIMAX_BASE_URL = "https://api.minimaxi.com/v1"
+MINIMAX_MODEL = "MiniMax-M2.7-highspeed"
+
+# ── 输出路径 ──────────────────────────────────────────────────────
 OUTPUT_DIR = "/Users/lisanchuan1/.openclaw/workspace/data/github_trending"
 REPORT_FILE = f"{OUTPUT_DIR}/latest.md"
 DATA_FILE = f"{OUTPUT_DIR}/repos.json"
 
+# ── AI 关键词过滤 ─────────────────────────────────────────────────
 AI_KEYWORDS = [
     "ai", "artificial intelligence", "machine learning", "ml",
     "deep learning", "neural", "llm", "gpt", "transformer",
@@ -33,184 +39,45 @@ EXCLUDE_KEYWORDS = [
     "youtube downloader", "video download"
 ]
 
-# 翻译短语映射（按长度降序排列，避免部分匹配）
-PHRASES = [
-    # 高优先级短语（越长越往前）
-    ("a web interface for", "的一个 Web 界面，用于"),
-    ("web interface for", "的 Web 界面，用于"),
-    ("Web Interface for", "Web 界面，用于"),
-    ("User-friendly AI Interface", "用户友好的 AI 界面，支持"),
-    ("AI Interface for", "AI 界面，用于"),
-    ("self-hostable", "可自托管的"),
-    ("open-source", "开源"),
-    ("artificial intelligence", "人工智能"),
-    ("machine learning", "机器学习"),
-    ("deep learning", "深度学习"),
-    ("large language model", "大语言模型"),
-    ("language model", "语言模型"),
-    ("multimodal model", "多模态模型"),
-    ("vision language model", "视觉语言模型"),
-    ("foundation model", "基础模型"),
-    ("generative AI", "生成式 AI"),
-    ("diffusion model", "扩散模型"),
-    ("stable diffusion", "Stable Diffusion"),
-    ("text-to-image", "文生图"),
-    ("image-to-image", "图生图"),
-    ("image generation", "图像生成"),
-    ("text generation", "文本生成"),
-    ("speech recognition", "语音识别"),
-    ("speech synthesis", "语音合成"),
-    ("autonomous agent", "自主智能体"),
-    ("autonomous agents", "自主智能体"),
-    ("agent framework", "智能体开发框架"),
-    ("agent engineering", "智能体工程"),
-    ("agent orchestration", "智能体编排"),
-    ("multi-agent", "多智能体"),
-    ("vector database", "向量数据库"),
-    ("vector search", "向量检索"),
-    ("retrieval-augmented", "检索增强"),
-    ("REST API", "REST API"),
-    ("GraphQL API", "GraphQL API"),
-    ("GPU-accelerated", "GPU 加速"),
-    ("computer vision", "计算机视觉"),
-    ("natural language processing", "自然语言处理"),
-    ("named entity recognition", "命名实体识别"),
-    ("knowledge base", "知识库"),
-    ("knowledge graph", "知识图谱"),
-    ("sentiment analysis", "情感分析"),
-    ("text classification", "文本分类"),
-    ("fine-tuning", "微调"),
-    ("knowledge graph", "知识图谱"),
-    # 中等优先级
-    ("command-line", "命令行"),
-    ("production-ready", "生产就绪"),
-    ("battle-tested", "经过验证"),
-    ("easy-to-use", "简单易用"),
-    ("easy to use", "简单易用"),
-    ("state-of-the-art", "最先进"),
-    ("cutting-edge", "前沿技术"),
-    ("conversational AI", "对话 AI"),
-    ("conversational", "对话式"),
-    ("building and deploying", "构建和部署"),
-    ("build and deploy", "构建和部署"),
-    ("cloud native", "云原生"),
-    ("privacy-preserving", "隐私保护"),
-    ("self-hosted", "自托管"),
-    ("serverless", "无服务器"),
-    ("graphical user interface", "图形界面"),
-    ("graph/nodes interface", "图形化节点界面"),
-    ("orchestration", "编排"),
-    ("orchestrate", "编排"),
-    # 工具/框架/平台
-    ("framework for", "框架，用于"),
-    ("framework to", "框架，用于"),
-    ("library for", "工具库，用于"),
-    ("tool for", "工具，用于"),
-    ("tools for", "工具，用于"),
-    ("platform for", "平台，用于"),
-    ("platform to", "平台，用于"),
-    ("API for", "API，用于"),
-    ("API to", "API，用于"),
-    ("web API", "Web API"),
-    # 基础词
-    ("generative", "生成式"),
-    ("agents", "智能体"),
-    ("agent", "智能体"),
-    ("embedding", "嵌入向量"),
-    ("transformer", "Transformer"),
-    ("neural network", "神经网络"),
-    ("pretrained", "预训练"),
-    ("pre-trained", "预训练"),
-    ("inference", "推理"),
-    ("batch inference", "批量推理"),
-    ("deployment", "部署"),
-    ("deploying", "部署"),
-    ("deploy", "部署"),
-    ("automation", "自动化"),
-    ("automate", "自动化"),
-    ("workflow", "工作流"),
-    ("chatbot", "聊天机器人"),
-    ("chat interface", "聊天界面"),
-    ("web interface", "Web 界面"),
-    ("collection of", "精选合集，包含"),
-    ("awesome", "精选"),
-    ("modular", "模块化"),
-    ("scalable", "可扩展"),
-    ("extensible", "可扩展"),
-    ("lightweight", "轻量级"),
-    ("performant", "高性能"),
-    ("powerful", "强大"),
-    ("simple to use", "简单易用"),
-    ("llama", "LLaMA"),
-    ("qwen", "Qwen"),
-    ("deepseek", "DeepSeek"),
-    ("groq", "Groq"),
-    ("ollama", "Ollama"),
-    ("vllm", "vLLM"),
-    ("mistral", "Mistral"),
-    ("claude", "Claude"),
-    ("gemini", "Gemini"),
-    ("cuda", "CUDA"),
-    ("python", "Python"),
-    ("rust", "Rust"),
-    ("typescript", "TypeScript"),
-    ("javascript", "JavaScript"),
-    ("docker", "Docker"),
-    ("kubernetes", "Kubernetes"),
-    ("fine-tune", "微调"),
-    ("training", "训练"),
-    ("real-time", "实时"),
-    ("privacy-first", "隐私优先"),
-    ("local-first", "本地优先"),
-    ("on-premise", "本地部署"),
-    ("summarization", "摘要生成"),
-    ("summarize", "摘要"),
-    ("translation", "翻译"),
-    ("hugging face", "Hugging Face"),
-    ("openai", "OpenAI"),
-    ("anthropic", "Anthropic"),
-    ("no-code", "无代码"),
-    ("low-code", "低代码"),
-    ("GUI", "图形界面"),
-]
+# ── LLM 翻译 ─────────────────────────────────────────────────────
+def llm_translate(desc, readme=""):
+    """用 MiniMax 把 description（+ 可选 README）翻译成中文"""
+    prompt = f"""你是一个 GitHub 项目描述翻译专家。请将以下 GitHub 项目的描述翻译成中文，要求：
+1. 简洁流畅，符合中文表达习惯
+2. 不超过 60 字
+3. 只返回翻译结果，不解释
+
+项目描述：{desc}"""
+    if readme:
+        prompt += f"\n\nREADME 摘要：\n{readme[:300]}"
+
+    payload = json.dumps({
+        "model": MINIMAX_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 100,
+        "temperature": 0.3
+    }).encode("utf-8")
+
+    req = urllib.request.Request(
+        f"{MINIMAX_BASE_URL}/chat/completions",
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {MINIMAX_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            result = json.loads(resp.read())
+            return result["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        print(f"    [LLM 翻译失败: {e}]")
+        return None
 
 
-def translate_en_to_zh(text):
-    """把英文翻译成中文（规则映射 + 词边界替换）"""
-    if not text:
-        return ""
-
-    result = text
-
-    # 短语替换（精准匹配，避免子串干扰）
-    for en, zh in PHRASES:
-        result = result.replace(en, zh).replace(en.lower(), zh)
-
-    # 词边界替换（保护短词不被误替换）
-    # 只替换单独成词的，不替换嵌入在其他词里的
-    result = re.sub(r'\bGUI\b', '图形界面', result)
-    result = re.sub(r'\bUI\b', '界面', result)
-    result = re.sub(r'\bapi\b', 'API', result)
-    result = re.sub(r'\bLLM\b', '大语言模型', result)
-
-    # 清理残留空格
-    for _ in range(4):
-        result = result.replace("  ", " ")
-
-    return result.strip()
-
-
-def translate_description(desc):
-    """翻译 description"""
-    if not desc:
-        return "暂无描述"
-
-    result = translate_en_to_zh(desc)
-    if len(result) > 80:
-        result = result[:80] + "…"
-    return result
-
-
+# ── GitHub API ────────────────────────────────────────────────────
 def gh_graphql(query, variables=None):
     """执行 GitHub GraphQL 查询"""
     cmd = ["gh", "api", "graphql", "-f", f"query={query}"]
@@ -343,7 +210,7 @@ def get_repo_topics(owner, repo_name):
 
 
 def get_readme_snippet(owner, repo_name):
-    """获取 README 开头（用于生成简介）"""
+    """获取 README 开头"""
     try:
         result = subprocess.run(
             ["gh", "api", f"/repos/{owner}/{repo_name}/readme"],
@@ -359,6 +226,7 @@ def get_readme_snippet(owner, repo_name):
         return None
 
 
+# ── 报告生成 ─────────────────────────────────────────────────────
 def generate_trending_section(repos, top_n=10):
     """生成热门项目章节"""
     lines = ["## 🔥 热门 AI 项目\n"]
@@ -367,14 +235,15 @@ def generate_trending_section(repos, top_n=10):
 
     for i, repo in enumerate(sorted_repos, 1):
         name = repo.get("nameWithOwner", "")
-        desc_raw = repo.get("description", "") or "无描述"
-        desc = translate_description(desc_raw)
+        desc_raw = repo.get("description", "") or ""
         lang = repo.get("primaryLanguage", {}).get("name", "") if repo.get("primaryLanguage") else ""
         stars = repo.get("stargazerCount", 0)
         url = repo.get("url", "")
 
+        desc_zh = llm_translate(desc_raw) or (desc_raw[:80] + "…" if desc_raw else "暂无描述")
+
         lines.append(f"### {i}. {name}")
-        lines.append(f"- {desc}")
+        lines.append(f"- {desc_zh}")
         lines.append(f"- ⭐ {stars:,} | {'语言: ' + lang if lang else '多语言'}")
         lines.append(f"- 🔗 {url}")
         lines.append("")
@@ -391,12 +260,14 @@ def generate_deepdive_section(repos, top_n=5):
     for i, repo in enumerate(top_repos, 1):
         name = repo.get("nameWithOwner", "")
         owner, repo_name = name.split("/") if "/" in name else (name, name)
-        desc_raw = repo.get("description", "") or "无描述"
-        desc_zh = translate_description(desc_raw)
+        desc_raw = repo.get("description", "") or ""
         stars = repo.get("stargazerCount", 0)
         lang = repo.get("primaryLanguage", {}).get("name", "") if repo.get("primaryLanguage") else ""
         topics = get_repo_topics(owner, repo_name)
         topics_str = " · ".join(topics[:5]) if topics else ""
+
+        readme = get_readme_snippet(owner, repo_name)
+        desc_zh = llm_translate(desc_raw, readme) or (desc_raw[:80] + "…" if desc_raw else "暂无描述")
 
         lines.append(f"### {i}. {name}")
         lines.append(f"- ⭐ {stars:,} | {'语言: ' + lang if lang else '多语言'}")
@@ -404,13 +275,11 @@ def generate_deepdive_section(repos, top_n=5):
         if topics_str:
             lines.append(f"- 🏷️ {topics_str}")
 
-        # 生成中文简介（翻译 README 片段）
-        readme = get_readme_snippet(owner, repo_name)
+        # 中文简介
         if readme:
-            summary_zh = translate_en_to_zh(readme)
-            if len(summary_zh) > 80:
-                summary_zh = summary_zh[:80] + "…"
-            lines.append(f"- 📖 {summary_zh}")
+            summary = llm_translate(desc_raw, readme)
+            if summary:
+                lines.append(f"- 📖 {summary}")
 
         lines.append("")
 
@@ -418,7 +287,7 @@ def generate_deepdive_section(repos, top_n=5):
 
 
 def generate_report(repos):
-    """生成完整报告（整合版）"""
+    """生成完整报告"""
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     today_str = datetime.now().strftime("%Y-%m-%d")
 
