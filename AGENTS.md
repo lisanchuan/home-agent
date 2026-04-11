@@ -54,8 +54,28 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 
 ## Task Logging
 
-After completing each task, write to `TASK_LOG.md` immediately:
+Every task and conversation turn must be logged. Do not skip.
 
+### CONVERSATION_LOG.md — Every Conversation Turn
+
+After each user message + assistant response (every turn), append to:
+`/Users/lisanchuan1/.openclaw/agents/supervisor/workspace/CONVERSATION_LOG.md`
+
+Format:
+```markdown
+**时间**：YYYY-MM-DD HH:mm
+**用户要求**：[原话摘要]
+**我的行动**：[具体做了什么]
+**结果**：✅成功 / ❌失败 / 🔄进行中
+**失败原因**：如有
+```
+
+### TASK_LOG.md — Task Completion Record
+
+After completing each discrete task, append to:
+`/Users/lisanchuan1/.openclaw/agents/supervisor/workspace/TASK_LOG.md`
+
+Format:
 ```markdown
 **时间**：YYYY-MM-DD HH:mm
 **任务**：用户要求
@@ -63,7 +83,22 @@ After completing each task, write to `TASK_LOG.md` immediately:
 **问题**：如有
 ```
 
-Log path: `/Users/lisanchuan1/.openclaw/agents/supervisor/workspace/TASK_LOG.md`
+### ISSUE_LOG.md — Problems and Failures
+
+When any error, failure, or unexpected behavior occurs, append to:
+`/Users/lisanchyan1/.openclaw/agents/supervisor/workspace/ISSUE_LOG.md`
+
+Format:
+```markdown
+**时间**：YYYY-MM-DD HH:mm
+**问题**：描述
+**原因**：根因分析
+**状态**：待修复/已修复
+```
+
+### 重复错误统计
+
+Every time the same error type repeats, increment the count in the table at the bottom of CONVERSATION_LOG.md. This is the key metric for identifying systemic problems vs one-off issues.
 
 ## External vs Internal
 
