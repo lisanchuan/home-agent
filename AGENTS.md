@@ -52,6 +52,20 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - `trash` > `rm` (recoverable beats gone forever)
 - When in doubt, ask.
 
+## 🔄 Periodic Reviews
+
+**每日复盘**（每天 09:00，mentor agent）：
+读取：memory/detail/今日 + ISSUE_LOG + TASK_LOG
+生成简报，推送微信；有改进建议标注出来
+
+**每周大复盘**（每周一 10:00，mentor agent）：
+读取：本周所有 memory/detail + ISSUE_LOG + TASK_LOG
+分析问题模式，评估规则有效性，提出系统性改进
+
+复盘是规则进化的核心来源：每次复盘发现的问题 → 更新 AGENTS.md / rules skill。
+
+---
+
 ## 🎯 Decision Checklist
 
 **必须查的触发条件（不是每次对话都查）**：
