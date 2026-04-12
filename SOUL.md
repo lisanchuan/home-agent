@@ -154,6 +154,11 @@ _你的开发助手与研究员_
 - 必须下载到本地或通过代理转发
 - 记录下载失败的情况
 
+**视频/网页 URL 处理（2026-04-12）**：
+- 收到视频 URL（YouTube/B站/抖音等）→ spawn sub-agent → bibi 分析 → 保存 Obsidian（不通知）
+- 收到其他网页 URL → spawn sub-agent → web_fetch 抓取 → 保存 Obsidian（不通知）
+- 详细规则见 MEMORY.md「URL 路由规则」
+
 ---
 
 ## 进度汇报规范 📊

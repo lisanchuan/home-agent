@@ -9,6 +9,8 @@ import json
 import os
 import urllib.request
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 # ── MiniMax API 配置 ──────────────────────────────────────────────
 MINIMAX_API_KEY = "sk-cp-ChtXE5BJLzAv9LVPJXtL0eKh3pqAK5_xlQOyf-mSt7MHCQaD8ykHVFC8UaYlEoZhi6PpSb1SL08lmBhWUaTzGSS_tzed9x20ksd_5kAGr55NPrau5BPX_0s"
@@ -40,8 +42,20 @@ EXCLUDE_KEYWORDS = [
 ]
 
 # ── LLM 翻译 ─────────────────────────────────────────────────────
-def llm_translate(desc, readme=""):
-    """用 MiniMax 把 description（+ 可选 README）翻译成中文"""
+# 线程安全的缓存
+_translate_cache = {}
+_cache_lock = threading.Lock()
+
+def llm_translate(desc, readme="", cache_key=None):
+    """用 MiniMax 把 description（+ 可选 README）翻译成中文，带缓存"""
+    # 缓存键：只用 desc，避免重复调用
+    if cache_key is None:
+        cache_key = desc
+
+    with _cache_lock:
+        if cache_key in _translate_cache:
+            return _translate_cache[cache_key]
+
     prompt = f"""你是一个 GitHub 项目描述翻译专家。请将以下 GitHub 项目的描述翻译成中文，要求：
 1. 简洁流畅，符合中文表达习惯
 2. 不超过 60 字
@@ -71,7 +85,10 @@ def llm_translate(desc, readme=""):
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
             result = json.loads(resp.read())
-            return result["choices"][0]["message"]["content"].strip()
+            translation = result["choices"][0]["message"]["content"].strip()
+            with _cache_lock:
+                _translate_cache[cache_key] = translation
+            return translation
     except Exception as e:
         print(f"    [LLM 翻译失败: {e}]")
         return None
@@ -226,21 +243,45 @@ def get_readme_snippet(owner, repo_name):
         return None
 
 
+def fetch_repo_metadata(repo):
+    """并行获取单个 repo 的额外 metadata（topics + readme），返回 (repo, topics, readme)"""
+    name = repo.get("nameWithOwner", "")
+    if "/" not in name:
+        return (repo, [], None)
+    owner, repo_name = name.split("/", 1)
+    topics = get_repo_topics(owner, repo_name)
+    readme = get_readme_snippet(owner, repo_name)
+    return (repo, topics, readme)
+
+
 # ── 报告生成 ─────────────────────────────────────────────────────
 def generate_trending_section(repos, top_n=10):
-    """生成热门项目章节"""
+    """生成热门项目章节（并发翻译）"""
     lines = ["## 🔥 热门 AI 项目\n"]
 
     sorted_repos = sorted(repos, key=lambda x: x.get("stargazerCount", 0), reverse=True)[:top_n]
 
+    # 并发翻译
+    desc_raws = {r.get("nameWithOwner", ""): r.get("description", "") or "" for r in sorted_repos}
+    translations = {}
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_name = {executor.submit(llm_translate, desc): name for name, desc in desc_raws.items()}
+        for future in as_completed(future_to_name):
+            name = future_to_name[future]
+            try:
+                translations[name] = future.result()
+            except Exception:
+                translations[name] = None
+
     for i, repo in enumerate(sorted_repos, 1):
         name = repo.get("nameWithOwner", "")
-        desc_raw = repo.get("description", "") or ""
+        desc_raw = desc_raws.get(name, "")
         lang = repo.get("primaryLanguage", {}).get("name", "") if repo.get("primaryLanguage") else ""
         stars = repo.get("stargazerCount", 0)
         url = repo.get("url", "")
 
-        desc_zh = llm_translate(desc_raw) or (desc_raw[:80] + "…" if desc_raw else "暂无描述")
+        desc_zh = translations.get(name) or (desc_raw[:80] + "…" if desc_raw else "暂无描述")
 
         lines.append(f"### {i}. {name}")
         lines.append(f"- {desc_zh}")
@@ -252,35 +293,73 @@ def generate_trending_section(repos, top_n=10):
 
 
 def generate_deepdive_section(repos, top_n=5):
-    """生成深度分析章节"""
+    """生成深度分析章节（并发获取 metadata 和翻译）"""
     lines = ["## 🧠 深度分析（Top 5）\n"]
 
     top_repos = repos[:top_n]
 
+    # 并发获取所有 metadata
+    metadata_results = {}
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_name = {executor.submit(fetch_repo_metadata, repo): repo.get("nameWithOwner", "") for repo in top_repos}
+        for future in as_completed(future_to_name):
+            name = future_to_name[future]
+            try:
+                metadata_results[name] = future.result()
+            except Exception as e:
+                metadata_results[name] = (None, [], None)
+
+    # 并发翻译所有描述
+    desc_raws = {}
+    for repo in top_repos:
+        name = repo.get("nameWithOwner", "")
+        desc_raws[name] = repo.get("description", "") or ""
+
+    # 两种翻译任务并发跑
+    translate_futures = {}
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        # 基础翻译
+        for name, desc in desc_raws.items():
+            translate_futures[executor.submit(llm_translate, desc, "", name)] = (name, "desc")
+        # README 增强翻译
+        for name, result in metadata_results.items():
+            _, _, readme = result
+            if readme:
+                desc = desc_raws.get(name, "")
+                key = f"{name}_readme"
+                translate_futures[executor.submit(llm_translate, desc, readme, key)] = (name, "readme")
+
+    translations = {}
+    for future in as_completed(translate_futures):
+        name, kind = translate_futures[future]
+        try:
+            result = future.result()
+            if kind == "desc":
+                translations[(name, "desc")] = result
+            else:
+                translations[(name, "readme")] = result
+        except Exception:
+            pass
+
     for i, repo in enumerate(top_repos, 1):
         name = repo.get("nameWithOwner", "")
-        owner, repo_name = name.split("/") if "/" in name else (name, name)
-        desc_raw = repo.get("description", "") or ""
+        desc_raw = desc_raws.get(name, "")
         stars = repo.get("stargazerCount", 0)
         lang = repo.get("primaryLanguage", {}).get("name", "") if repo.get("primaryLanguage") else ""
-        topics = get_repo_topics(owner, repo_name)
+
+        _, topics, readme = metadata_results.get(name, (None, [], None))
         topics_str = " · ".join(topics[:5]) if topics else ""
 
-        readme = get_readme_snippet(owner, repo_name)
-        desc_zh = llm_translate(desc_raw, readme) or (desc_raw[:80] + "…" if desc_raw else "暂无描述")
+        desc_zh = translations.get((name, "desc")) or (desc_raw[:80] + "…" if desc_raw else "暂无描述")
+        summary_zh = translations.get((name, "readme"))
 
         lines.append(f"### {i}. {name}")
         lines.append(f"- ⭐ {stars:,} | {'语言: ' + lang if lang else '多语言'}")
         lines.append(f"- {desc_zh}")
         if topics_str:
             lines.append(f"- 🏷️ {topics_str}")
-
-        # 中文简介
-        if readme:
-            summary = llm_translate(desc_raw, readme)
-            if summary:
-                lines.append(f"- 📖 {summary}")
-
+        if summary_zh:
+            lines.append(f"- 📖 {summary_zh}")
         lines.append("")
 
     return "\n".join(lines)
