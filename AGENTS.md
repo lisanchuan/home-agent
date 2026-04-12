@@ -94,20 +94,17 @@ Every task and conversation turn must be logged. Do not skip.
 ### TASK_LOG.md — Task Completion Record
 
 After completing each discrete task, append to:
-`/Users/lisanchuan1/.openclaw/agents/supervisor/workspace/TASK_LOG.md`
+`~/.openclaw/agents/supervisor/workspace/TASK_LOG.md`
 
 Format:
 ```markdown
-**时间**：YYYY-MM-DD HH:mm
-**任务**：用户要求
-**结果**：完成/未完成/部分完成
-**问题**：如有
+**[时间]** [类型] [任务摘要] → [结果]
 ```
 
 ### ISSUE_LOG.md — Problems and Failures
 
 When any error, failure, or unexpected behavior occurs, append to:
-`/Users/lisanchyan1/.openclaw/agents/supervisor/workspace/ISSUE_LOG.md`
+`~/.openclaw/agents/supervisor/workspace/ISSUE_LOG.md`
 
 Format:
 ```markdown
