@@ -54,9 +54,19 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 
 ## 🎯 Decision Checklist
 
-**触发时机**：做技术决策、遇到错误、开始新任务之前
+**必须查的触发条件（不是每次对话都查）**：
+- 修 bug / 排查问题
+- 技术选型、方案设计
+- 引入新依赖、改变架构
+- 遇到错误时
+- 部署、运维操作
 
-**每次必查（30秒快速扫描，不占用大块时间）**：
+**不需要查的**：
+- 纯对话（你好、谢谢、知道了）
+- 简单读取信息不决策
+- 已有明确路径的简单操作
+
+**必查项目（30秒快速扫描）**：
 
 ```
 1. 这个问题以前遇到过吗？     → 查 ISSUE_LOG
@@ -69,8 +79,6 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - 有先例 → 引用先例，说明为什么用/不用同样的方案
 - 有类似问题 → 先解决根因，不要重蹈覆辙
 - 没有记录 → 正常执行，完成后主动补充日志
-
-**这不是可选步骤，是决策前的强制环节。**
 
 ## Task Logging
 
