@@ -52,6 +52,26 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - `trash` > `rm` (recoverable beats gone forever)
 - When in doubt, ask.
 
+## 🎯 Decision Checklist
+
+**触发时机**：做技术决策、遇到错误、开始新任务之前
+
+**每次必查（30秒快速扫描，不占用大块时间）**：
+
+```
+1. 这个问题以前遇到过吗？     → 查 ISSUE_LOG
+2. 这个方向以前做过吗？       → 查 TASK_LOG
+3. 之前失败的原因是什么？     → 对照 ISSUE_LOG 核验
+4. 日记里有没有相关记录？     → memory/detail/ 最近几天快速扫
+```
+
+**查到后的动作**：
+- 有先例 → 引用先例，说明为什么用/不用同样的方案
+- 有类似问题 → 先解决根因，不要重蹈覆辙
+- 没有记录 → 正常执行，完成后主动补充日志
+
+**这不是可选步骤，是决策前的强制环节。**
+
 ## Task Logging
 
 Every task and conversation turn must be logged. Do not skip.
